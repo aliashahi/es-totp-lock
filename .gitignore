@@ -21,4 +21,4 @@
 go.work
 
 # add licence
-emqxsl-ca.crt
+*.crt
