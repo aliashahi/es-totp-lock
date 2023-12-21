@@ -4,8 +4,8 @@
 #include <Keypad.h>
 #include <TM1637Display.h>
 // KEYPAD
-#define CLK  2 // The ESP32 pin GPIO22 connected to CLK
-#define DIO  4 // The ESP32 pin GPIO23 connected to DIO
+#define CLK  4 // The ESP32 pin GPIO22 connected to CLK
+#define DIO  2 // The ESP32 pin GPIO23 connected to DIO
 
 #define ROW_NUM     4 // four rows
 #define COLUMN_NUM  3 // three columns
@@ -17,8 +17,8 @@ char keys[ROW_NUM][COLUMN_NUM] = {
   {'*', '0', '#'}
 };
 
-byte pin_rows[ROW_NUM] = {5, 18, 19, 21}; 
-byte pin_column[COLUMN_NUM] = {22, 23, 15};
+byte pin_rows[ROW_NUM] = {34, 35, 32, 33}; 
+byte pin_column[COLUMN_NUM] = {25, 26, 27};
 
 const uint8_t waitLine[] = { SEG_G };
 
