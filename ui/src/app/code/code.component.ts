@@ -10,9 +10,10 @@ import { WsService } from '../ws.service';
 export class CodeComponent {
   current_date: string = '';
 
-  constructor(public api: ApiService, private ws: WsService) {
+  constructor(public api: ApiService) {
     this.update();
     setInterval(this.update.bind(this), 1000);
+    api.code();
   }
 
   private update() {

@@ -4,60 +4,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-}
-
-type Client struct {
-	UserID uuid.UUID
-	Conn   *websocket.Conn
-}
-
-var clientChannels = make([]Client, 0, 10)
-
-func tokenMiddleware() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		token, err := ctx.Cookie(_COOKIE_TOKEN)
-		if err != nil {
-			ctx.AbortWithError(http.StatusUnauthorized, fmt.Errorf("login"))
-			return
-		}
-
-		userId, err := uuid.Parse(token)
-		if err != nil {
-			ctx.AbortWithError(http.StatusUnauthorized, err)
-			return
-		}
-
-		found := false
-		for _, u := range users {
-			if u.ID == userId {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		ctx.Set(_COOKIE_TOKEN, token)
-	}
-}
-
-func ctxUserID(ctx *gin.Context) (uuid.UUID, error) {
-	s := ctx.GetString(_COOKIE_TOKEN)
-	return uuid.Parse(s)
 }
 
 func WebServer() {
@@ -71,35 +28,32 @@ func WebServer() {
 	router := engine.Group("api")
 
 	router.POST("/login", login)
+	router.GET("/logout", tokenMiddleware(), logout)
 	router.GET("/userinfo", tokenMiddleware(), userInfo)
 	router.POST("/create", tokenMiddleware(), create)
+	router.DELETE("/:id", tokenMiddleware(), delete)
 	router.GET("/code", tokenMiddleware(), code)
 	router.GET("/users", tokenMiddleware(), allUsers)
 	router.GET("/logs", tokenMiddleware(), allLogs)
-	router.GET("/ws", tokenMiddleware(), ws)
+	router.GET("/ws-logs", tokenMiddleware(), wsLogs)
+	router.GET("/ws-users", tokenMiddleware(), wsUsers)
+	router.GET("/validate", validate)
 
 	if err := engine.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func ws(ctx *gin.Context) {
-	userId, err := ctxUserID(ctx)
+func validate(ctx *gin.Context) {
+	q := ctx.Query("code")
+	u, err := GetUserByPasscode(q)
 	if err != nil {
-		ctx.AbortWithError(http.StatusUnauthorized, err)
+		Logger("%s (%s)", err.Error(), q)
+		ctx.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	clientChannels = append(clientChannels, Client{
-		UserID: userId,
-		Conn:   conn,
-	})
+	ctx.String(http.StatusOK, fmt.Sprintf("correct code for user %s", u.Username))
 }
 
 func userInfo(ctx *gin.Context) {
@@ -112,7 +66,8 @@ func userInfo(ctx *gin.Context) {
 	for _, u := range users {
 		if u.ID == userId {
 			ctx.JSON(http.StatusCreated, gin.H{
-				"isAdmin": u.Username == "admin",
+				"isAdmin":  u.IsAdmin(),
+				"username": u.Username,
 			})
 			return
 		}
@@ -143,6 +98,13 @@ func login(ctx *gin.Context) {
 	ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("username/password is wrong"))
 }
 
+func logout(ctx *gin.Context) {
+
+	ctx.SetCookie(_COOKIE_TOKEN, "", 0, "/", "", false, true)
+
+	ctx.AbortWithStatus(http.StatusUnauthorized)
+}
+
 func create(ctx *gin.Context) {
 	var req LoginReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -157,19 +119,34 @@ func create(ctx *gin.Context) {
 		}
 	}
 
-	secret := uuid.NewString()
-
-	new_user := User{
-		ID:       uuid.New(),
-		Username: req.Username,
-		Password: req.Password,
-		Code:     generatePassCode(secret),
-		Secret:   secret,
+	if _, err := createUser(req.Username, req.Password); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
-	users = append(users, &new_user)
-
 	ctx.AbortWithStatus(http.StatusCreated)
+}
+
+func delete(ctx *gin.Context) {
+	if !isAdmin(ctx) {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	id_raw := ctx.Param("id")
+	id, err := uuid.Parse(id_raw)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	err = deleteUser(id)
+	if err != nil {
+		ctx.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	ctx.AbortWithStatus(http.StatusOK)
 }
 
 func code(ctx *gin.Context) {
@@ -181,7 +158,14 @@ func code(ctx *gin.Context) {
 
 	for _, u := range users {
 		if u.ID == userId {
-			ctx.JSON(http.StatusOK, gin.H{"code": u.Code})
+			var png []byte
+			content := fmt.Sprintf("otpauth://totp/ESP32-%s?secret=%s", u.Username, u.Secret)
+			png, err := qrcode.Encode(content, qrcode.Medium, 512)
+			if err != nil {
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+			ctx.JSON(http.StatusOK, gin.H{"secret": png})
 			return
 		}
 	}
@@ -197,45 +181,11 @@ func allUsers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"users": users})
 }
 
-func isAdmin(ctx *gin.Context) bool {
-	userId, _ := ctxUserID(ctx)
-	for _, u := range users {
-		if u.ID == userId {
-			return u.Username == "admin"
-		}
-	}
-
-	panic("user not found")
-}
-
 func allLogs(ctx *gin.Context) {
 	if !isAdmin(ctx) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	raw := ctx.Query("lastId")
-	lastLogId, err := strconv.ParseInt(raw, 10, 64)
-	if raw == "" || err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"logs": logs})
-		return
-	}
 
-	_logs := make([]*Log, 0, len(logs))
-
-	for _, l := range logs {
-		if l.ID > lastLogId {
-			_logs = append(_logs, l)
-		}
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"logs": _logs})
-}
-
-func GetUserByPasscode(passcode string) (*User, error) {
-	for _, u := range users {
-		if u.Code == passcode {
-			return u, nil
-		}
-	}
-	return nil, fmt.Errorf("wrong code")
+	ctx.JSON(http.StatusOK, gin.H{"logs": logs})
 }

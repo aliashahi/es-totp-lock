@@ -57,7 +57,7 @@ const uint8_t eror[] = {
 };
 
 // BUZZER
-#define BUZZER 13
+#define BUZZER 23
 
 // WiFi
 const char *ssid = "ali"; // Enter your WiFi name
@@ -189,8 +189,8 @@ void handleKeypad(){
     }
     else if(key == '#') {
       Serial.println("sending input ...");
-      char tempString[32];
-      dtostrf(num, 4, 0, tempString);
+      char tempString[64];
+      dtostrf(num, 6, 0, tempString);
       if (!client.connected()) {
           connectMQTT();
       }
@@ -200,7 +200,7 @@ void handleKeypad(){
       clean();
       return;
     }
-    else if( digitCount == 4){
+    else if( digitCount == 6){
       clean();
     }
     num*= 10;

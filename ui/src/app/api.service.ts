@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { WsService } from './ws.service';
 
 @Injectable({
   providedIn: 'root',
@@ -8,19 +9,15 @@ export class ApiService {
   Mode: 'LOGIN' | 'CODE' | 'USER' | 'LOG' = 'LOGIN';
   username: string = '';
   password: string = '';
-  currentCode: string = '123 123';
+  currentCode: string = '';
+  currentSecret: string = '';
   lastLogId: string = '';
   logs: string[] = [];
   users: any[] = [];
 
   private _loading: number = 0;
 
-  constructor(private http: HttpClient) {
-    this.userInfo();
-    setInterval(() => this.code(), 1 * 1000);
-    setInterval(() => this.allLogs(), 5 * 1000);
-    setInterval(() => this.getUsers(), 5 * 1000);
-  }
+  constructor(private ws: WsService, private http: HttpClient) {}
 
   get loading(): boolean {
     return this._loading != 0;
@@ -28,11 +25,12 @@ export class ApiService {
 
   userInfo() {
     this.http.get('/api/userinfo').subscribe({
-      next: ({ isAdmin }: any) => {
+      next: ({ isAdmin, username }: any) => {
         this.Mode = isAdmin ? 'LOG' : 'CODE';
+        this.username = username;
         this.code();
         this.allLogs();
-        this.getUsers();
+        this.allUsers();
       },
       error: () => {
         this.Mode = 'LOGIN';
@@ -52,6 +50,7 @@ export class ApiService {
         next: ({ isAdmin }: any) => {
           this._loading--;
           this.Mode = isAdmin ? 'LOG' : 'CODE';
+          this.userInfo();
         },
         error: () => {
           this._loading--;
@@ -59,11 +58,26 @@ export class ApiService {
       });
   }
 
+  logout() {
+    this._loading++;
+    this.http.get('/api/logout').subscribe({
+      next: () => {
+        this._loading--;
+        this.Mode = 'LOGIN';
+      },
+      error: () => {
+        this._loading--;
+        this.Mode = 'LOGIN';
+      },
+    });
+  }
+
   code() {
     if (this.Mode != 'CODE') return;
     this.http.get(`/api/code`).subscribe({
-      next: ({ code }: any) => {
+      next: ({ code, secret }: any) => {
         this.currentCode = code;
+        this.currentSecret = secret;
       },
       error: () => {
         this.Mode = 'LOGIN';
@@ -91,13 +105,16 @@ export class ApiService {
 
   allLogs() {
     if (this.Mode != 'LOG') return;
-    this.http.get(`/api/logs?lastId=${this.lastLogId}`).subscribe({
+    this.http.get(`/api/logs`).subscribe({
       next: ({ logs }: any) => {
         this.lastLogId = logs[logs.length - 1].id;
         this.logs = [
           ...logs.map((i: any) => i.message).reverse(),
           ...this.logs,
         ];
+        this.ws.log().subscribe((data) => {
+          this.logs = [data.data, ...this.logs];
+        });
       },
       error: () => {
         this.Mode = 'LOGIN';
@@ -105,9 +122,24 @@ export class ApiService {
     });
   }
 
-  getUsers() {
+  allUsers() {
     if (this.Mode != 'LOG') return;
     this.http.get(`/api/users`).subscribe({
+      next: ({ users }: any) => {
+        this.users = [...users];
+        this.ws.user().subscribe((data) => {
+          this.users = [JSON.parse(data.data), ...this.users];
+        });
+      },
+      error: () => {
+        this.Mode = 'LOGIN';
+      },
+    });
+  }
+
+  deleteUser(id: string) {
+    if (this.Mode != 'LOG') return;
+    this.http.delete(`/api/delete/${id}`).subscribe({
       next: ({ users }: any) => {
         this.users = [...users];
       },

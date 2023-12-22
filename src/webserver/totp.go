@@ -2,46 +2,50 @@ package webserver
 
 import (
 	"encoding/base32"
-	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/pquerna/otp"
-	"github.com/pquerna/otp/totp"
+	googauth "es-project/src/googauth2"
+	"fmt"
+	"math/rand"
 )
 
-func init() {
-	updateCodes()
-	go func() {
-		for {
-			updateCodes()
-			time.Sleep(15 * time.Second)
-		}
-	}()
-}
-
-func updateCodes() {
-	for _, u := range users {
-		u.Code = generatePassCode(u.Secret)
-		for _, client := range clientChannels {
-			if client.UserID == u.ID {
-				client.Conn.WriteMessage(websocket.TextMessage, []byte(u.Code))
-			}
-		}
+func (u *User) Validate(passcode string) (bool, error) {
+	otpc := &googauth.OTPConfig{
+		Secret:      u.Secret,
+		WindowSize:  3,
+		HotpCounter: 0,
+		UTC:         false,
 	}
-}
 
-func generatePassCode(raw_secret string) string {
-	secret := base32.StdEncoding.EncodeToString([]byte(raw_secret))
-	passcode, err := totp.GenerateCodeCustom(secret, time.Now(), totp.ValidateOpts{
-		Period:    30,
-		Skew:      1,
-		Digits:    otp.DigitsSix,
-		Algorithm: otp.AlgorithmSHA512,
-	})
-
+	val, err := otpc.Authenticate(passcode)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return passcode
+	return val, nil
+}
+
+func GetUserByPasscode(passcode string) (*User, error) {
+	for _, u := range users {
+		if ok, err := u.Validate(passcode); err != nil {
+			return nil, err
+		} else if ok {
+			return u, nil
+		}
+	}
+
+	return nil, fmt.Errorf("wrong code")
+}
+
+func createSecret() string {
+	var s string
+	const chars = "qwertyuioplkjhgfdsamnbvcxzQWERTYUIOPASDFGHJKLZXCVBNM"
+	for i := 0; i < 20; i++ {
+		r := rand.Int31n(int32(len(chars)))
+		s = fmt.Sprintf("%s%c", s, chars[r])
+	}
+
+	return base32.StdEncoding.EncodeToString([]byte(s))
+}
+
+func (u *User) IsAdmin() bool {
+	return u.Username == "admin"
 }

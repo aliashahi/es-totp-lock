@@ -1,19 +1,41 @@
 import { Injectable } from '@angular/core';
-import { Socket } from 'ngx-socket-io';
-import { map } from 'rxjs/operators';
+import { Observable, Observer, Subject, filter } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable()
 export class WsService {
-  constructor(private socket: Socket) {
-    this.getMessage().subscribe((data) => console.log(data));
+  log(): Observable<any> {
+    let ws = new WebSocket('ws://' + location.host + '/api/ws-logs');
+
+    const observable = new Observable((obs: Observer<MessageEvent>) => {
+      ws.onmessage = obs.next.bind(obs);
+      ws.onerror = obs.error.bind(obs);
+      ws.onclose = obs.complete.bind(obs);
+
+      return ws.close.bind(ws);
+    });
+
+    // const observer = {
+    //   next: (data: Object) => {
+    //     if (ws.readyState === WebSocket.OPEN) {
+    //       ws.send(JSON.stringify(data));
+    //     }
+    //   },
+    // };
+
+    return observable;
   }
 
-  sendMessage(msg: string) {
-    this.socket.emit('code', msg);
-  }
-  getMessage() {
-    return this.socket.fromEvent('code').pipe(map((data: any) => data.code));
+  user(): Observable<any> {
+    let ws = new WebSocket('ws://' + location.host + '/api/ws-users');
+
+    const observable = new Observable((obs: Observer<MessageEvent>) => {
+      ws.onmessage = obs.next.bind(obs);
+      ws.onerror = obs.error.bind(obs);
+      ws.onclose = obs.complete.bind(obs);
+
+      return ws.close.bind(ws);
+    });
+
+    return observable;
   }
 }

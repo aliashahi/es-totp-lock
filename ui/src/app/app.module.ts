@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
-import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoginComponent } from './login/login.component';
@@ -17,6 +16,7 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { HttpClientModule } from '@angular/common/http';
 import { LogComponent } from './log/log.component';
 import { SocketIoConfig, SocketIoModule } from 'ngx-socket-io';
+import { WsService } from './ws.service';
 
 const MATERIALS = [
   MatInputModule,
@@ -26,10 +26,12 @@ const MATERIALS = [
 ];
 
 const config: SocketIoConfig = {
-  url: '/',
+  url: '',
   options: {
     path: '/api/ws',
     autoConnect: true,
+    upgrade: true,
+    rememberUpgrade: true,
   },
 };
 
@@ -57,6 +59,7 @@ const config: SocketIoConfig = {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: { appearance: 'outline' },
     },
+    WsService,
   ],
   bootstrap: [AppComponent],
 })
