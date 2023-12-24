@@ -8,6 +8,13 @@ import (
 )
 
 func (u *User) Validate(passcode string) (bool, error) {
+	for {
+		if len(passcode) < 6 {
+			passcode = "0" + passcode
+		} else {
+			break
+		}
+	}
 	otpc := &googauth.OTPConfig{
 		Secret:      u.Secret,
 		WindowSize:  3,
@@ -23,9 +30,19 @@ func (u *User) Validate(passcode string) (bool, error) {
 	return val, nil
 }
 
-func GetUserByPasscode(passcode string) (*User, error) {
+func convertToString(passcode []byte) string {
+	v := ""
+	for _, c := range passcode {
+		v += fmt.Sprint(int(c) - 48)
+	}
+	return v
+}
+
+func GetUserByPasscode(passcode []byte) (*User, error) {
+	code := convertToString(passcode)
+
 	for _, u := range users {
-		if ok, err := u.Validate(passcode); err != nil {
+		if ok, err := u.Validate(code); err != nil {
 			return nil, err
 		} else if ok {
 			return u, nil

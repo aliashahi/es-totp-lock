@@ -46,7 +46,7 @@ func WebServer() {
 
 func validate(ctx *gin.Context) {
 	q := ctx.Query("code")
-	u, err := GetUserByPasscode(q)
+	u, err := GetUserByPasscode([]byte(q))
 	if err != nil {
 		Logger("%s (%s)", err.Error(), q)
 		ctx.String(http.StatusInternalServerError, err.Error())

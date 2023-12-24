@@ -189,12 +189,12 @@ void handleKeypad(){
     }
     else if(key == '#') {
       Serial.println("sending input ...");
-      char tempString[64];
-      dtostrf(num, 6, 0, tempString);
+      char temp[6];
+      sprintf(temp, "%d", num);
       if (!client.connected()) {
           connectMQTT();
       }
-      client.publish(pub_topic, tempString);
+      client.publish(pub_topic, temp);
       client.subscribe(sub_topic,0);
       Serial.println("published");
       clean();

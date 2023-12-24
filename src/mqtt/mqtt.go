@@ -78,10 +78,9 @@ func subscribe(client mqtt.Client) {
 	qos := 0
 	client.Subscribe(sub_topic, byte(qos), func(client mqtt.Client, msg mqtt.Message) {
 		webserver.Logger("Received `%s` from `%s` topic\n", msg.Payload(), msg.Topic())
-		u, err := webserver.GetUserByPasscode(fmt.Sprint(msg.Payload()))
+		u, err := webserver.GetUserByPasscode(msg.Payload())
 		if err != nil {
-			webserver.Logger("authentication failed")
-			webserver.Logger("%s fail - tried with code %s", time.Now().Format(time.RFC3339), msg.Payload())
+			webserver.Logger("authentication failed (code: %s)\n err: %s", msg.Payload(), err.Error())
 			Publish(client, "0")
 			return
 		}
