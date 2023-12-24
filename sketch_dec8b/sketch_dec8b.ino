@@ -129,16 +129,21 @@ void setup() {
 
 void connectWIFI(){
   WiFi.begin(ssid, password);
+  if (WiFi.status() == WL_CONNECTED)
+    return;
+
+  Serial.println("Connecting to WiFi..");
   while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.println("Connecting to WiFi..");
+      delay(1000);
   }
   Serial.println("Connected to the WiFi network");
 }
 
 void connectMQTT() {
-  while (!client.connected()) {
+  if (client.connected())
+    return;
     Serial.println("connecting to MQTT broker...");
+  while (!client.connected()) {
     String client_id = "esp32-client-";
     client_id += String(WiFi.macAddress());
     if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
@@ -146,11 +151,11 @@ void connectMQTT() {
     } else {
         Serial.print("Failed to connect to MQTT broker, rc=");
         Serial.print(client.state());
-        Serial.println("Retrying in 5 seconds.");
-        delay(5000);
+        Serial.println("Retrying in 2 seconds.");
+        delay(2000);
     }
   }
-  client.subscribe(sub_topic,0);
+  client.subscribe(sub_topic,2);
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -162,7 +167,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     Serial.println();
     Serial.println("-----------------------");
-    // if(topic == sub_topic){
     if (payload[0] == '1'){
       display.setSegments(_open);
     }else {
@@ -170,7 +174,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     delay(2000);
       display.clear();
-    // }
 }
 
 void clean(){
@@ -215,9 +218,6 @@ void handleKeypad(){
 }
 
 void loop() {
-  if (!client.connected()) {
-    connectMQTT();
-  }
   handleKeypad();
   client.loop();
 }

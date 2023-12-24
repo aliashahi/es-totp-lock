@@ -65,7 +65,7 @@ func createMqttClient() mqtt.Client {
 }
 
 func Publish(client mqtt.Client, payload string) {
-	qos := 0
+	qos := 2
 	if token := client.Publish(pub_topic, byte(qos), false, payload); token.Wait() && token.Error() != nil {
 		webserver.Logger("publish failed, topic: %s, payload: %s\n", pub_topic, payload)
 		Publish(client, payload)
