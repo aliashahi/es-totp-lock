@@ -16,8 +16,6 @@ WORKDIR /app
 
 COPY ./ui/package.json ./
 
-COPY ./ui/yarn.lock ./
-
 RUN yarn
 
 COPY ./ui .
