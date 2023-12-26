@@ -65,12 +65,9 @@ func createMqttClient() mqtt.Client {
 }
 
 func Publish(client mqtt.Client, payload string) {
-	qos := 2
+	qos := 0
 	if token := client.Publish(pub_topic, byte(qos), false, payload); token.Wait() && token.Error() != nil {
-		webserver.Logger("publish failed, topic: %s, payload: %s\n", pub_topic, payload)
 		Publish(client, payload)
-	} else {
-		webserver.Logger("publish success, topic: %s, payload: %s\n", pub_topic, payload)
 	}
 }
 
@@ -85,7 +82,7 @@ func subscribe(client mqtt.Client) {
 			return
 		}
 
-		webserver.Logger("authentication successfull - user %s entered the room", u.Username)
+		webserver.Logger("authentication successfull : user \"%s\" entered the room", u.Username)
 		Publish(client, fmt.Sprintf("1%s", u.Username))
 	})
 }

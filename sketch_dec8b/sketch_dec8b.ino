@@ -5,28 +5,28 @@
 #include <LiquidCrystal.h>
 
 //////////PINS/////////////////////
-#define CLK 12
-#define DIO 13
+// #define CLK 12
+// #define DIO 13
 
-#define ROW1 5
-#define ROW2 18
-#define ROW3 19
-#define ROW4 21
+#define ROW1 13
+#define ROW2 12
+#define ROW3 14
+#define ROW4 27
 
-#define COL1 22
-#define COL2 4
-#define COL3 15
+#define COL1 26
+#define COL2 25
+#define COL3 33
 
 #define BUZZER 23
 
-#define LCD_LIGHT 22
+#define LCD_LIGHT 15
 
-#define LCD_RS 12
-#define LCD_EN 8
+#define LCD_RS 2
+#define LCD_EN 4
 #define LCD_D0 5
-#define LCD_D1 4
-#define LCD_D2 3
-#define LCD_D3 2
+#define LCD_D1 18
+#define LCD_D2 19
+#define LCD_D3 21
 ///////////////////////////////////
 
 #define ROW_NUM 4     // four rows
@@ -56,7 +56,8 @@ const char *pub_topic = "es-project/esp/pub";                   // define topic
 const char *sub_topic = "es-project/server/pub";                // define topic
 const char *mqtt_username = "test";                             // username for authentication
 const char *mqtt_password = "test";                             // password for authentication
-const int mqtt_port = 8883;                                     // port of MQTT over TLS/SSL
+const int mqtt_port = 8883;
+const int qos = 0;
 
 // load DigiCert Global Root CA ca_cert
 const char *ca_cert =
@@ -101,63 +102,78 @@ void connectWIFI() {
     return;
 
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.println("Connecting to");
-  lcd.println("WiFi");
+  lcd.setCursor(2, 0);
+  lcd.print("Connecting to");
+  lcd.setCursor(5, 1);
+  lcd.print("WiFi");
 
-  Serial.println("Connecting to WiFi..");
+  Serial.println("Connecting to WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     if (i == 3) {
       i = 0;
-      lcd.setCursor(4, 1);
-      lcd.print("WiFi   ");
-      continue;
+      lcd.setCursor(5, 1);
+      lcd.print("WiFi    ");
+    } else {
+      lcd.setCursor(9 + i, 1);
+      lcd.print(".");
+      i += 1;
     }
-    i += 1;
-    lcd.setCursor(4 + i, 1);
-    lcd.print(".");
     delay(1000);
   }
   lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.print("Connected to");
+  lcd.setCursor(5, 1);
+  lcd.print("WiFi");
+  delay(1000);
   Serial.println("Connected to the WiFi");
 }
 
 void connectMQTT() {
   int i = 0;
-  if (client.connected())
+  if (client.connected()) {
+    client.subscribe(sub_topic, qos);
     return;
+  }
 
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.println("Connecting to");
-  lcd.println("MQTT");
+  lcd.setCursor(2, 0);
+  lcd.print("Connecting to");
+  lcd.setCursor(5, 1);
+  lcd.print("MQTT");
 
   Serial.println("connecting to MQTT broker...");
   while (!client.connected()) {
     String client_id = "esp32-client-";
     client_id += String(WiFi.macAddress());
     if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+      lcd.clear();
+      lcd.setCursor(3, 0);
+      lcd.print("Connected to");
+      lcd.setCursor(5, 1);
+      lcd.print("MQTT");
       Serial.println("connected to MQTT broker.");
-      continue;
+      delay(2000);
+      break;
     } else {
       Serial.print("Failed to connect to MQTT broker, rc=");
       Serial.print(client.state());
       Serial.println("Retrying in 2 seconds.");
-      delay(2000);
     }
 
     if (i == 3) {
       i = 0;
-      lcd.setCursor(4, 1);
+      lcd.setCursor(5, 1);
       lcd.print("MQTT   ");
       continue;
     }
-    i += 1;
-    lcd.setCursor(4 + i, 1);
+    lcd.setCursor(9 + i, 1);
     lcd.print(".");
+    i += 1;
+    delay(2000);
   }
 
-  client.subscribe(sub_topic, 2);
+  client.subscribe(sub_topic, qos);
 }
 
 void callback(char *topic, byte *payload, unsigned int length) {
@@ -172,7 +188,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   if (payload[0] == '1') {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.println("Wellcome");
+    lcd.print("Wellcome");
     lcd.setCursor(0, 1);
     for (int i = 1; i < length && i < 16; i++) {
       lcd.print((char)payload[i]);
@@ -189,8 +205,7 @@ void clean() {
     num[i] = '0';
   }
   digitCount = 0;
-  lcd.clear();
-  return;
+  state = 1;
 }
 
 void readingKeypad() {
@@ -200,9 +215,6 @@ void readingKeypad() {
       clean();
       return;
     } else if (key == '#') {
-      state = 2;
-      return;
-    } else if (digitCount == 6) {
       return;
     }
     num[digitCount] = key;
@@ -211,9 +223,20 @@ void readingKeypad() {
     Serial.print("input: ");
     Serial.println(num);
   }
+  if (digitCount == 6) {
+    delay(500);
+    state = 2;
+  }
 }
 
-void openDoor() {}
+void openDoor() {
+  digitalWrite(BUZZER, HIGH);
+  delay(500);
+  digitalWrite(BUZZER, LOW);
+  delay(3000);
+  clean();
+  state = 1;
+}
 
 void sendingCode() {
   Serial.println("sending input ...");
@@ -223,27 +246,33 @@ void sendingCode() {
   }
 
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("wait...");
+  lcd.setCursor(4, 0);
+  lcd.print("sending...");
 
   while (!client.publish(pub_topic, num)) {
     delay(1000);
   }
 
-  client.subscribe(sub_topic, 2);
+  client.subscribe(sub_topic, qos);
   Serial.println("published");
   state = 3;
 }
 
 void waitForResponse() {
   // real wait is in callback function;
+  lcd.clear();
+  lcd.setCursor(5, 0);
+  lcd.print("waiting");
+  
+  connectMQTT();
   client.loop();
+  delay(500);
 }
 
 void showError() {
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("--unauthorized--");
+  lcd.setCursor(2, 0);
+  lcd.print("unauthorized!");
   delay(2000);
   clean();
   state = 1;
@@ -253,7 +282,7 @@ void setup() {
   pinMode(BUZZER, OUTPUT);
 
   pinMode(LCD_LIGHT, OUTPUT);
-  analogWrite(6, 90);
+  analogWrite(LCD_LIGHT, 100);
 
   lcd.begin(16, 2);
   // Set software serial baud to 115200;
@@ -265,12 +294,20 @@ void setup() {
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
   connectMQTT();
+  lcd.clear();
   state = 1;
 }
 
 void loop() {
   switch (state) {
     case 1:
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("enter passcode:");
+      lcd.setCursor(5, 1);
+      state = 11;
+      break;
+    case 11:
       readingKeypad();
       break;
     case 2:

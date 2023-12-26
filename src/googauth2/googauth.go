@@ -13,7 +13,6 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"net/url"
 	"sort"
 	"strconv"
@@ -102,7 +101,6 @@ func (c *OTPConfig) checkTotpCode(t0, code int) bool {
 	maxT := t0 + (c.WindowSize / 2)
 	for t := minT; t <= maxT; t++ {
 		code2 := computeCode(c.Secret, int64(t))
-		fmt.Println(code2)
 		if code2 == code {
 
 			if c.DisallowReuse != nil {
