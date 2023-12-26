@@ -78,24 +78,26 @@ func deleteUser(id uuid.UUID) error {
 	return nil
 }
 
+const _USER_FILE_PATH = "./data/users.json"
+
 func presistUsers() error {
 	d, err := json.Marshal(users)
 	if err != nil {
 		return err
 	}
 
-	os.WriteFile("./users.json", d, 0600)
+	os.WriteFile(_USER_FILE_PATH, d, 0600)
 
 	return nil
 }
 
 func loadUsers() error {
-	raw, err := os.ReadFile("./users.json")
+	raw, err := os.ReadFile(_USER_FILE_PATH)
 	if err != nil {
-		if err == os.ErrNotExist {
-			return nil
+		if err := os.WriteFile(_USER_FILE_PATH, []byte("[]"), 0600); err != nil {
+			return err
 		}
-		return err
+		return nil
 	}
 
 	err = json.Unmarshal(raw, &users)

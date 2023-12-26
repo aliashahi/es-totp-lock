@@ -20,7 +20,8 @@
 # Go workspace file
 go.work
 
-# add licence
-*.crt
 
 vendor
+
+data/*
+!data/.gitkeep

@@ -86,7 +86,7 @@ func subscribe(client mqtt.Client) {
 		}
 
 		webserver.Logger("authentication successfull - user %s entered the room", u.Username)
-		Publish(client, "1")
+		Publish(client, fmt.Sprintf("1%s", u.Username))
 	})
 }
 

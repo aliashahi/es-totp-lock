@@ -1,0 +1,23 @@
+name: Deploy To Liara.ir
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  deploy:
+    if: "contains(github.event.head_commit.message, 'liara')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - name: update-liara
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: |
+          npm i -g @liara/cli@5
+          liara deploy --debug --app="estotp" --disks data:/data --platform=docker --api-token="$LIARA_TOKEN" --no-app-logs --port=8080
