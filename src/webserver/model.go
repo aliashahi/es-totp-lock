@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const static_ui = false
+const static_ui = true
 const _COOKIE_TOKEN = "TOKEN"
 
 type LoginReq struct {
