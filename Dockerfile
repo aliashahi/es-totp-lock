@@ -27,8 +27,8 @@ RUN apk --no-cache add ca-certificates
 
 COPY --from=serverbuild /app/totp-service  .
 COPY emqxsl-ca.crt  /emqxsl-ca.crt
-COPY data/.gitkeep  /data
-COPY --from=frontbuild /app/dist/  ./ui/dist
+COPY data/.gitkeep  /data/
+COPY --from=frontbuild /app/dist/  /ui/dist
 
 EXPOSE 8080
 # Run
