@@ -22,7 +22,7 @@ func WebServer() {
 	if !static_ui {
 		engine.NoRoute(uiReverseProxy())
 	} else {
-		engine.Use(static.Serve("/", static.LocalFile("./ui/dist", true)))
+		engine.Use(static.Serve("/", static.LocalFile("/ui/dist", true)))
 	}
 
 	router := engine.Group("api")
