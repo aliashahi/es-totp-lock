@@ -21,3 +21,4 @@ jobs:
         run: |
           npm i -g @liara/cli@5
           liara deploy --debug --app="estotp" --disks data:/data --platform=docker --api-token="$LIARA_TOKEN" --no-app-logs --port=8080
+ 
