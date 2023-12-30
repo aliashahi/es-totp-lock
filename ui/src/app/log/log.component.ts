@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ApiService } from '../api.service';
-import { WsService } from '../ws.service';
+import { MatDialog } from '@angular/material/dialog';
+import { UserComponent } from '../user/user.component';
 
 @Component({
   selector: 'app-log',
@@ -8,7 +9,11 @@ import { WsService } from '../ws.service';
   styleUrls: ['./log.component.scss'],
 })
 export class LogComponent {
-  constructor(public api: ApiService, private ws: WsService) {
-    this.api.userInfo();
+  constructor(public api: ApiService, private dialog: MatDialog) {}
+
+  onNewUser() {
+    this.dialog.open(UserComponent, {
+      minWidth: '33vw',
+    });
   }
 }

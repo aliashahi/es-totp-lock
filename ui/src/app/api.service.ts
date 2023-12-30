@@ -6,7 +6,7 @@ import { WsService } from './ws.service';
   providedIn: 'root',
 })
 export class ApiService {
-  Mode: 'LOGIN' | 'CODE' | 'USER' | 'LOG' = 'LOGIN';
+  Mode: 'LOGIN' | 'CODE' | 'LOG' = 'LOGIN';
   username: string = '';
   password: string = '';
   currentCode: string = '';
@@ -85,7 +85,7 @@ export class ApiService {
     });
   }
 
-  create(username: string, password: string) {
+  create(username: string, password: string, onClose: any) {
     this._loading++;
     this.http
       .post('/api/create', {
@@ -96,6 +96,7 @@ export class ApiService {
         next: () => {
           this._loading--;
           this.Mode = 'LOG';
+          onClose();
         },
         error: () => {
           this._loading--;

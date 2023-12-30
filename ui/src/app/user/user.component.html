@@ -1,40 +1,38 @@
-<div class="w-screen h-screen flex justify-center items-center bg-pattern">
-  <div class="w-full sm:w-1/2 md:w-1/3 rounded-md bg-white p-2 py-10 sm:px-10">
-    <form class="flex flex-col justify-center">
-      <h1 class="mx-auto text-2xl pb-10">Create New User</h1>
-      <mat-form-field>
-        <input
-          matInput
-          [(ngModel)]="new_username"
-          placeholder="username"
-          [ngModelOptions]="{ standalone: true }"
-        />
-      </mat-form-field>
-      <mat-form-field>
-        <input
-          type="password"
-          [(ngModel)]="new_password"
-          matInput
-          placeholder="password"
-          [ngModelOptions]="{ standalone: true }"
-        />
-      </mat-form-field>
+<div class="w-full rounded-md bg-white p-2 py-10 sm:px-10">
+  <form class="flex flex-col justify-center">
+    <h1 class="mx-auto text-2xl pb-10">Create New User</h1>
+    <mat-form-field>
+      <input
+        matInput
+        [(ngModel)]="new_username"
+        placeholder="username"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </mat-form-field>
+    <mat-form-field>
+      <input
+        type="password"
+        [(ngModel)]="new_password"
+        matInput
+        placeholder="password"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </mat-form-field>
 
-      <button
-        matButton
-        mat-raised-button
-        color="primary"
-        type="submit"
-        [disabled]="new_password == '' || new_username == ''"
-        (click)="api.create(new_username, new_password)"
-      >
-        Create User
-      </button>
-      <a
-        class="mx-auto p-2 text-blue-500 hover:text-blue-800 cursor-pointer"
-        (click)="api.Mode = 'LOG'"
-        >back</a
-      >
-    </form>
-  </div>
+    <button
+      matButton
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="new_password == '' || new_username == ''"
+      (click)="onSubmit()"
+    >
+      Create User
+    </button>
+    <a
+      class="mx-auto p-2 text-blue-500 hover:text-blue-800 cursor-pointer"
+      (click)="dialogRef.close()"
+      >back</a
+    >
+  </form>
 </div>

@@ -17,6 +17,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { LogComponent } from './log/log.component';
 import { SocketIoConfig, SocketIoModule } from 'ngx-socket-io';
 import { WsService } from './ws.service';
+import { MatDialogModule } from '@angular/material/dialog';
 
 const MATERIALS = [
   MatInputModule,
@@ -51,6 +52,7 @@ const config: SocketIoConfig = {
     ReactiveFormsModule,
     FormsModule,
     HttpClientModule,
+    MatDialogModule,
     SocketIoModule.forRoot(config),
     ...MATERIALS,
   ],
