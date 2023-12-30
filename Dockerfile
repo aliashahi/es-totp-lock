@@ -32,4 +32,4 @@ COPY --from=frontbuild /app/dist/  ./ui/dist
 
 EXPOSE 8080
 # Run
-CMD ["/totp-service"]
+CMD ["/totp-service"] 
