@@ -47,11 +47,14 @@ func WebServer() {
 func validate(ctx *gin.Context) {
 	q := ctx.Query("code")
 	u, err := GetUserByPasscode([]byte(q))
+	Logger("testing : code : %s", q)
 	if err != nil {
 		Logger("%s (%s)", err.Error(), q)
 		ctx.String(http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	Logger("testing : successfull")
 
 	ctx.String(http.StatusOK, fmt.Sprintf("correct code for user %s", u.Username))
 }
