@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable, Observer, Subject, filter } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 
 @Injectable()
 export class WsService {
+  private readonly _url: string = `wss://${location.host}`;
   log(): Observable<any> {
-    let ws = new WebSocket('ws://' + location.host + '/api/ws-logs');
+    let ws = new WebSocket(this._url + '/api/ws-logs');
 
     const observable = new Observable((obs: Observer<MessageEvent>) => {
       ws.onmessage = obs.next.bind(obs);
@@ -14,19 +15,11 @@ export class WsService {
       return ws.close.bind(ws);
     });
 
-    // const observer = {
-    //   next: (data: Object) => {
-    //     if (ws.readyState === WebSocket.OPEN) {
-    //       ws.send(JSON.stringify(data));
-    //     }
-    //   },
-    // };
-
     return observable;
   }
 
   user(): Observable<any> {
-    let ws = new WebSocket('ws://' + location.host + '/api/ws-users');
+    let ws = new WebSocket(this._url + '/api/ws-users');
 
     const observable = new Observable((obs: Observer<MessageEvent>) => {
       ws.onmessage = obs.next.bind(obs);
