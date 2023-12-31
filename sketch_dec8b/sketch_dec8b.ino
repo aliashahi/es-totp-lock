@@ -234,11 +234,11 @@ void readingKeypad() {
 
 void openDoor() {
   // digitalWrite(BUZZER, HIGH);
-  analogWrite(SLOCK, 100);
+  digitalWrite(SLOCK, HIGH);
   delay(500);
   // digitalWrite(BUZZER, LOW);
   delay(3000);
-  analogWrite(SLOCK, 0);
+  digitalWrite(SLOCK, LOW);
   clean();
   state = 1;
 }
