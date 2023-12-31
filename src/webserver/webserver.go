@@ -47,16 +47,16 @@ func WebServer() {
 func validate(ctx *gin.Context) {
 	q := ctx.Query("code")
 	u, err := GetUserByPasscode([]byte(q))
-	Logger("testing : code : %s", q)
+	Logger("<span style=\"color:#aeff35\">testing</span> code : %s", q)
 	if err != nil {
 		Logger("%s (%s)", err.Error(), q)
 		ctx.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	Logger("testing : successfull")
+	Logger("<span style=\"color:#aeff35\">testing</span> : successfull")
 
-	ctx.String(http.StatusOK, fmt.Sprintf("correct code for user %s", u.Username))
+	ctx.String(http.StatusOK, fmt.Sprintf("correct code for user <span style=\"color:green\">%s</span>", u.Username))
 }
 
 func userInfo(ctx *gin.Context) {
@@ -71,6 +71,7 @@ func userInfo(ctx *gin.Context) {
 			ctx.JSON(http.StatusCreated, gin.H{
 				"isAdmin":  u.IsAdmin(),
 				"username": u.Username,
+				"avatar":   u.Avatar,
 			})
 			return
 		}
@@ -149,7 +150,7 @@ func delete(ctx *gin.Context) {
 		return
 	}
 
-	ctx.AbortWithStatus(http.StatusOK)
+	ctx.AbortWithStatusJSON(http.StatusOK, gin.H{"users": users})
 }
 
 func code(ctx *gin.Context) {

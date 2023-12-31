@@ -9,6 +9,7 @@ export class ApiService {
   Mode: 'LOGIN' | 'CODE' | 'LOG' = 'LOGIN';
   username: string = '';
   password: string = '';
+  avatar: string = '';
   currentCode: string = '';
   currentSecret: string = '';
   lastLogId: string = '';
@@ -25,9 +26,10 @@ export class ApiService {
 
   userInfo() {
     this.http.get('/api/userinfo').subscribe({
-      next: ({ isAdmin, username }: any) => {
+      next: ({ isAdmin, username, avatar }: any) => {
         this.Mode = isAdmin ? 'LOG' : 'CODE';
         this.username = username;
+        this.avatar = avatar;
         this.code();
         this.allLogs();
         this.allUsers();
@@ -140,7 +142,7 @@ export class ApiService {
 
   deleteUser(id: string) {
     if (this.Mode != 'LOG') return;
-    this.http.delete(`/api/delete/${id}`).subscribe({
+    this.http.delete(`/api/${id}`).subscribe({
       next: ({ users }: any) => {
         this.users = [...users];
       },

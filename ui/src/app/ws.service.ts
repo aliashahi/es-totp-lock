@@ -3,7 +3,7 @@ import { Observable, Observer } from 'rxjs';
 
 @Injectable()
 export class WsService {
-  private readonly _url: string = `wss://${location.host}`;
+  private readonly _url: string = `ws://${location.host}`;
   log(): Observable<any> {
     let ws = new WebSocket(this._url + '/api/ws-logs');
 

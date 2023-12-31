@@ -3,6 +3,7 @@ package webserver
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -20,6 +21,11 @@ func init() {
 	createUser("test", "test")
 }
 
+func createProfile() string {
+	v := rand.Int31n(70) + 1
+	return "https://i.pravatar.cc/150?img=" + fmt.Sprint(v)
+}
+
 func createUser(username, password string) (*User, error) {
 	for _, u := range users {
 		if u.Username == username {
@@ -35,6 +41,7 @@ func createUser(username, password string) (*User, error) {
 		Password:  password,
 		CreatedAt: time.Now(),
 		Secret:    secret,
+		Avatar:    createProfile(),
 	}
 
 	users = append(users, &new_user)

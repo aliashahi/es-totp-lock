@@ -17,8 +17,9 @@ type LoginReq struct {
 type User struct {
 	ID        uuid.UUID `json:"id"`
 	Username  string    `json:"username"`
-	Password  string    `json:",omitempty"`
-	Secret    string    `json:",omitempty"`
+	Password  string    `json:"-"`
+	Avatar    string    `json:"avatar"`
+	Secret    string    `json:"-"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

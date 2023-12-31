@@ -27,11 +27,7 @@
   <ul>
     <li class="flex justify-center items-center mx-5">
       <span class="mx-2">{{ api.username }}</span>
-      <img
-        src="https://i.pravatar.cc/150?img=60"
-        class="w-12 h-12 rounded-full"
-        alt=""
-      />
+      <img [src]="api.avatar" class="w-12 h-12 rounded-full" alt="" />
     </li>
   </ul>
 </header>
@@ -40,31 +36,35 @@
     <div class="w-full px-4 py-3 text-xl">Users</div>
     <hr />
     <ul>
-      <li
-        class="w-full flex items-center justify-between p-3 text-xl group hover:bg-gray-600 transition-all hover:text-white"
-        *ngFor="let user of api.users; let i = index"
-      >
-        <div>
-          <span class="block p-0 m-0"> - {{ user.username }} </span>
-          <span class="text-sm text-gray-700">
-            {{ user.created_at | date : "yyyy/MM/dd hh:mm:ss" }}
-          </span>
-        </div>
+      <ng-container *ngFor="let user of api.users; let i = index">
+        <li
+          class="w-full flex items-center justify-between p-3 text-xl group hover:bg-gray-600 transition-all hover:text-white"
+        >
+          <img [src]="user.avatar" class="w-12 h-12 rounded-full mr-2" alt="" />
+          <div class="p-0 m-0 flex-1">
+            <span class="block p-0 m-0">
+              {{ user.username }}
+            </span>
+            <span class="text-xs text-gray-700 group-hover:text-gray-300">
+              {{ user.created_at | date : "yyyy/MM/dd hh:mm:ss" }}
+            </span>
+          </div>
 
-        <button mat-icon-button (click)="api.deleteUser(user.id)">
-          <mat-icon color="accent">delete</mat-icon>
-        </button>
-      </li>
+          <button mat-icon-button (click)="api.deleteUser(user.id)">
+            <mat-icon color="accent">delete</mat-icon>
+          </button>
+        </li>
+        <hr />
+      </ng-container>
     </ul>
   </div>
   <article
     class="flex flex-col fixed left-72 right-0 top-16 bottom-0 items-start justify-start w-full bg-gray-900 text-yellow-300 overflow-y-scroll"
   >
     <div
-      class="border-b-2 border-gray-800 py-4 w-full p-2"
+      class="border-b-2 border-gray-800 p-2 w-full"
       *ngFor="let item of api.logs"
-    >
-      {{ item }}
-    </div>
+      [innerHTML]="item | safeHtml"
+    ></div>
   </article>
 </section>

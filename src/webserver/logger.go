@@ -7,7 +7,7 @@ import (
 
 func Logger(format string, a ...any) {
 	s := fmt.Sprintf(format, a...)
-	s = fmt.Sprintf("%s : %s", time.Now().Format(time.DateTime), s)
+	s = fmt.Sprintf("<span style=\"color:red\">%s</span> : %s", time.Now().Format(time.DateTime), s)
 	go func() {
 		for _, conn := range logConnections {
 			conn.C <- s

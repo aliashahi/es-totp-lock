@@ -18,6 +18,7 @@ import { LogComponent } from './log/log.component';
 import { SocketIoConfig, SocketIoModule } from 'ngx-socket-io';
 import { WsService } from './ws.service';
 import { MatDialogModule } from '@angular/material/dialog';
+import { SafeHtmlPipe } from './safe-html.pipe';
 
 const MATERIALS = [
   MatInputModule,
@@ -43,10 +44,10 @@ const config: SocketIoConfig = {
     CodeComponent,
     UserComponent,
     LogComponent,
+    SafeHtmlPipe,
   ],
   imports: [
     BrowserModule,
-    // AppRoutingModule,
     BrowserAnimationsModule,
     CommonModule,
     ReactiveFormsModule,
