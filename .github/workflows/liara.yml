@@ -2,9 +2,9 @@ name: Deploy To Liara.ir
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 jobs:
   deploy:
     if: "contains(github.event.head_commit.message, 'liara')"
@@ -20,5 +20,4 @@ jobs:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
         run: |
           npm i -g @liara/cli@5
-          liara deploy --debug --app="es-totp-lock" --disks data:/data --disks /etc/timezone:/etc/timezone:ro --platform=docker --api-token="$LIARA_TOKEN" --no-app-logs --port=8080
- 
+          liara deploy --debug --app="es-totp-lock" --disks data:/data --platform=docker --api-token="$LIARA_TOKEN" --no-app-logs --port=8080

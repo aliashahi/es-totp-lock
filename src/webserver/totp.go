@@ -19,7 +19,7 @@ func (u *User) Validate(passcode string) (bool, error) {
 		Secret:      u.Secret,
 		WindowSize:  3,
 		HotpCounter: 0,
-		UTC:         false,
+		UTC:         true,
 	}
 
 	val, err := otpc.Authenticate(passcode)
