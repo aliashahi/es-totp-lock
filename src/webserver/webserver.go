@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -88,7 +89,7 @@ func login(ctx *gin.Context) {
 	}
 
 	for _, u := range users {
-		if u.Username == req.Username && u.Password == req.Password {
+		if u.Username == strings.ToLower(req.Username) && u.Password == strings.ToLower(req.Password) {
 			ctx.SetCookie(_COOKIE_TOKEN, fmt.Sprint(u.ID), 1000, "/", "", false, true)
 
 			ctx.JSON(http.StatusCreated, gin.H{

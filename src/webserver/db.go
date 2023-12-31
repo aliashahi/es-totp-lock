@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,8 +38,8 @@ func createUser(username, password string) (*User, error) {
 
 	new_user := User{
 		ID:        uuid.New(),
-		Username:  username,
-		Password:  password,
+		Username:  strings.ToLower(username),
+		Password:  strings.ToLower(password),
 		CreatedAt: time.Now(),
 		Secret:    secret,
 		Avatar:    createProfile(),
