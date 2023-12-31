@@ -47,8 +47,8 @@ Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_N
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D0, LCD_D1, LCD_D2, LCD_D3);
 
 // WiFi
-const char *ssid = "ali";               // Enter your WiFi name
-const char *password = "123456123456";  // Enter WiFi password
+const char *ssid = "Redmi 7A";               // Enter your WiFi name
+const char *password = "43744374";  // Enter WiFi password
 
 // MQTT Broker
 const char *mqtt_broker = "f25aeeaa.ala.us-east-1.emqxsl.com";  // broker address
@@ -94,6 +94,7 @@ char num[7] = "000000";
 int digitCount = 0;
 
 int state = 0;
+int wait30 =0;
 
 void connectWIFI() {
   int i = 0;
@@ -267,6 +268,18 @@ void waitForResponse() {
   connectMQTT();
   client.loop();
   delay(500);
+
+    wait30 =wait30+1;
+  if(wait30>2)
+  {
+    lcd.clear();
+    lcd.setCursor(5, 0);
+    lcd.print("timeout");
+    delay(1000);
+    state=1;
+    wait30=0;
+  }
+
 }
 
 void showError() {
