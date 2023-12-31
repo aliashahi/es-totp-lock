@@ -17,9 +17,7 @@
 #define COL2 25
 #define COL3 33
 
-#define BUZZER 23
-
-#define LCD_LIGHT 15
+#define LCD_BRIGHTNESS 15
 
 #define LCD_RS 2
 #define LCD_EN 4
@@ -27,6 +25,10 @@
 #define LCD_D1 18
 #define LCD_D2 19
 #define LCD_D3 21
+
+// #define BUZZER 23
+#define SLOCK 22
+#define RED_LIGHT 23
 ///////////////////////////////////
 
 #define ROW_NUM 4     // four rows
@@ -94,10 +96,10 @@ char num[7] = "000000";
 int digitCount = 0;
 
 int state = 0;
+int watchdog = 0;
 
 void connectWIFI() {
   int i = 0;
-  WiFi.begin(ssid, password);
   if (WiFi.status() == WL_CONNECTED)
     return;
 
@@ -105,7 +107,7 @@ void connectWIFI() {
   lcd.setCursor(2, 0);
   lcd.print("Connecting to");
   lcd.setCursor(5, 1);
-  lcd.print("WiFi");
+  lcd.print("WiFi ");
 
   Serial.println("Connecting to WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
@@ -121,16 +123,17 @@ void connectWIFI() {
     delay(1000);
   }
   lcd.clear();
-  lcd.setCursor(3, 0);
-  lcd.print("Connected to");
-  lcd.setCursor(5, 1);
-  lcd.print("WiFi");
+  lcd.setCursor(0, 0);
+  lcd.print("WiFi Connected");
   delay(1000);
   Serial.println("Connected to the WiFi");
 }
 
 void connectMQTT() {
   int i = 0;
+
+  connectWIFI();
+
   if (client.connected()) {
     client.subscribe(sub_topic, qos);
     return;
@@ -148,10 +151,8 @@ void connectMQTT() {
     client_id += String(WiFi.macAddress());
     if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
       lcd.clear();
-      lcd.setCursor(3, 0);
-      lcd.print("Connected to");
-      lcd.setCursor(5, 1);
-      lcd.print("MQTT");
+      lcd.setCursor(0, 0);
+      lcd.print("MQTT Connected");
       Serial.println("connected to MQTT broker.");
       delay(2000);
       break;
@@ -177,6 +178,8 @@ void connectMQTT() {
 }
 
 void callback(char *topic, byte *payload, unsigned int length) {
+  if(state != 3)return;
+
   Serial.print("Message arrived in \n topic: ");
   Serial.println(topic);
   Serial.print("Message:");
@@ -230,10 +233,12 @@ void readingKeypad() {
 }
 
 void openDoor() {
-  digitalWrite(BUZZER, HIGH);
+  // digitalWrite(BUZZER, HIGH);
+  analogWrite(SLOCK, 100);
   delay(500);
-  digitalWrite(BUZZER, LOW);
+  // digitalWrite(BUZZER, LOW);
   delay(3000);
+  analogWrite(SLOCK, 0);
   clean();
   state = 1;
 }
@@ -255,10 +260,16 @@ void sendingCode() {
 
   client.subscribe(sub_topic, qos);
   Serial.println("published");
+  watchdog = 0;
   state = 3;
 }
 
 void waitForResponse() {
+  if(watchdog == 20){
+    state = 6;
+    return;
+  }
+  watchdog+= 1;
   // real wait is in callback function;
   lcd.clear();
   lcd.setCursor(5, 0);
@@ -270,30 +281,55 @@ void waitForResponse() {
 }
 
 void showError() {
+  // digitalWrite(BUZZER,HIGH);
+  digitalWrite(RED_LIGHT,HIGH);
   lcd.clear();
   lcd.setCursor(2, 0);
   lcd.print("unauthorized!");
   delay(2000);
+  // digitalWrite(BUZZER,LOW);
+  digitalWrite(RED_LIGHT,LOW);
   clean();
   state = 1;
 }
 
-void setup() {
-  pinMode(BUZZER, OUTPUT);
+void timeOut() {
+  // digitalWrite(BUZZER,HIGH);
+  digitalWrite(RED_LIGHT,HIGH);
+  lcd.clear();
+  lcd.setCursor(4, 0);
+  lcd.print("timeout!");
+  delay(2000);
+  clean();
+  // digitalWrite(BUZZER,LOW);
+  digitalWrite(RED_LIGHT,LOW);
+  state = 1;
+}
 
-  pinMode(LCD_LIGHT, OUTPUT);
-  analogWrite(LCD_LIGHT, 100);
+void setup() {
+  pinMode(RED_LIGHT, OUTPUT);
+  pinMode(SLOCK, OUTPUT);
+  digitalWrite(SLOCK, 0);
+
+  pinMode(LCD_BRIGHTNESS, OUTPUT);
+  analogWrite(LCD_BRIGHTNESS, 100);
 
   lcd.begin(16, 2);
+  lcd.setCursor(4, 0);
+  lcd.print("TOTP Lock");
+  lcd.setCursor(5,1);
+  lcd.print("v1.0.0");
   // Set software serial baud to 115200;
   Serial.begin(115200);
   // connecting to a WiFi network
-  connectWIFI();
+  WiFi.begin(ssid, password);
+  // connectWIFI();
   // setup mqtt broker
   espClient.setCACert(ca_cert);
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
-  connectMQTT();
+  // connectMQTT();
+  delay(3000);
   lcd.clear();
   state = 1;
 }
@@ -321,6 +357,9 @@ void loop() {
       break;
     case 5:
       showError();
+      break;
+    case 6:
+      timeOut();
       break;
   }
 }
