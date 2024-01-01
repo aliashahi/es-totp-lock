@@ -234,11 +234,11 @@ void readingKeypad() {
 
 void openDoor() {
   // digitalWrite(BUZZER, HIGH);
-  digitalWrite(SLOCK, HIGH);
+  digitalWrite(SLOCK, LOW);
   delay(500);
   // digitalWrite(BUZZER, LOW);
   delay(3000);
-  digitalWrite(SLOCK, LOW);
+  digitalWrite(SLOCK, HIGH);
   clean();
   state = 1;
 }
@@ -265,7 +265,7 @@ void sendingCode() {
 }
 
 void waitForResponse() {
-  if(watchdog == 20){
+  if(watchdog == 60){
     state = 6;
     return;
   }
@@ -273,7 +273,7 @@ void waitForResponse() {
   // real wait is in callback function;
   lcd.clear();
   lcd.setCursor(5, 0);
-  lcd.print("waiting");
+  lcd.print("waiting...");
   
   connectMQTT();
   client.loop();
@@ -309,7 +309,7 @@ void timeOut() {
 void setup() {
   pinMode(RED_LIGHT, OUTPUT);
   pinMode(SLOCK, OUTPUT);
-  digitalWrite(SLOCK, 0);
+  digitalWrite(SLOCK, HIGH);
 
   pinMode(LCD_BRIGHTNESS, OUTPUT);
   analogWrite(LCD_BRIGHTNESS, 100);
