@@ -15,13 +15,12 @@ import (
 
 const (
 	protocol  = "ssl"
-	broker    = "f25aeeaa.ala.us-east-1.emqxsl.com" // broker address
-	sub_topic = "es-project/esp/pub"                // define topic
-	pub_topic = "es-project/server/pub"             // define topic
-	username  = "test"                              // username for authentication
-	password  = "test"                              // password for authentication
-	port      = 8883                                // port of MQTT over TLS/SSL
-
+	broker    = "be7d4b6b.ala.asia-southeast1.emqxsl.com" // broker address
+	sub_topic = "es-project/esp/pub"                      // define topic
+	pub_topic = "es-project/server/pub"                   // define topic
+	username  = "test"                                    // username for authentication
+	password  = "test"                                    // password for authentication
+	port      = 8883                                      // port of MQTT over TLS/SSL
 )
 
 func Boot() {
