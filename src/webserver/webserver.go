@@ -183,6 +183,11 @@ func allUsers(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
+
+	for _, u := range users {
+		u.Password = ""
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{"users": users})
 }
 

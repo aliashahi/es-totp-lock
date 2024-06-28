@@ -110,7 +110,10 @@ func loadUsers() error {
 
 	err = json.Unmarshal(raw, &users)
 	if err != nil {
-		return err
+		if err := os.WriteFile(_USER_FILE_PATH, []byte("[]"), 0600); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return nil
